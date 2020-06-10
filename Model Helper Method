@@ -7,3 +7,29 @@ def populate_time_info(sender, instance, *args, **kwargs):
             instance.archived_at = timezone.now()
             
 pre_save.connect(populate_time_info, sender=Job)
+
+def populate_user_info_request(request, is_changed, is_archived):
+    http_header = request.META.get('HTTP_X_FORWARDED_FOR') if request.META.get('HTTP_X_FORWARDED_FOR') is not None else request.META.get('REMOTE_ADDR')
+    if is_changed:
+        request.data['modified_by'] = request.user.id
+        request.data['modified_from'] = http_header
+        if is_archived:
+            request.data['archived_by'] = request.user.id
+            request.data['archived_from'] = http_header
+    else:
+        request.data['created_by'] = request.user.id
+        request.data['created_from'] = http_header
+        
+
+def populate_user_info(request, instance, is_changed, is_archived):
+    http_header = request.META.get('HTTP_X_FORWARDED_FOR') if request.META.get(
+        'HTTP_X_FORWARDED_FOR') is not None else request.META.get('REMOTE_ADDR')
+    if is_changed:
+        instance.modified_by = request.user.id
+        instance.modified_from = http_header
+        if is_archived:
+            instance.archived_by = request.user.id
+            instance.archived_from = http_header
+    else:
+        instance.created_by = request.user.id
+        instance.created_from = http_header
