@@ -1,0 +1,5 @@
+** Different Charsets/Collations Among the Two Table/Columns **
+
+SHOW TABLE STATUS LIKE 'tableName';
+
+ALTER TABLE `tableName` CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci 
