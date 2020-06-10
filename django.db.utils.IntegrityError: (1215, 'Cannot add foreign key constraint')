@@ -3,3 +3,6 @@
 SHOW TABLE STATUS LIKE 'tableName';
 
 ALTER TABLE `tableName` CONVERT TO CHARACTER SET utf8 COLLATE utf8_general_ci 
+
+Helper link:
+https://dzone.com/articles/dealing-with-mysql-error-code-1215-cannot-add-foreign-key-constraint
