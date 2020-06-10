@@ -1,0 +1,149 @@
+from django.db import models
+
+class P7Model(models.Model):
+    created_by = models.CharField(max_length=255, null=True)
+    created_at = models.DateTimeField(null=True)
+    created_from = models.CharField(max_length=255, null=True)
+    modified_by = models.CharField(max_length=255, null=True)
+    modified_at = models.DateTimeField(auto_now=True)
+    modified_from = models.CharField(max_length=255, null=True)
+    is_archived = models.BooleanField(default=False)
+    archived_by = models.CharField(max_length=255, null=True)
+    archived_at = models.DateTimeField(null=True)
+    archived_from = models.CharField(max_length=255, null=True)
+
+    class Meta:
+        abstract = True
+        
+        
+class Company(P7Model):
+    name = models.CharField(max_length=255, primary_key=True)
+    address = models.CharField(max_length=500, blank=True, null=True)
+    area = models.CharField(max_length=255, blank=True, null = True)
+    city = models.CharField(max_length=255, blank=True, null = True)
+    country = CountryField(default = strings_job.DEFAULT_JOB_COUNTRY)
+    company_name_bdjobs = models.CharField(max_length=255, blank=True, null=True)
+    company_name_facebook = models.CharField(max_length=255, blank=True, null=True)
+    company_name_google = models.CharField(max_length=255, blank=True, null=True)
+    basis_membership_no = models.CharField(max_length=50, blank=True, null=True)
+    year_of_eastablishment = models.DateField(blank=True, null=True)
+    company_profile = models.TextField(blank=True, null = True)
+    company_contact_no_one = models.CharField(max_length=50, blank=True, null=True)
+    company_contact_no_two = models.CharField(max_length=50, blank=True, null=True)
+    company_contact_no_three = models.CharField(max_length=50, blank=True, null=True)
+    email = models.CharField(max_length=100, null=True, blank=True)
+    web_address = models.CharField(max_length=255, blank=True, null=True)
+    organization_head = models.CharField(max_length=60, blank=True, null=True)
+    organization_head_designation =  models.CharField(max_length=30, null=True, blank=True)
+    organization_head_number = models.CharField(max_length=15, null=True, blank=True)
+    legal_structure_of_this_company = models.CharField(max_length=60, null=True, blank=True)
+    total_number_of_human_resources = models.PositiveSmallIntegerField(null=True, blank=True)
+    no_of_it_resources = models.PositiveSmallIntegerField(null=True, blank=True)
+    contact_person = models.CharField(max_length=50, blank=True, null=True)
+    contact_person_designation = models.CharField(max_length=50, blank=True, null=True) ## need to recheck (foreign key)
+    contact_person_mobile_no = models.CharField(max_length=20, blank=True, null=True)
+    contact_person_email = models.CharField(max_length=100, blank=True, null=True)
+    user = models.OneToOneField(User, on_delete=models.PROTECT, null=True, blank=True)
+    profile_picture = models.ImageField(upload_to='images/', blank=True, null=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True)
+
+    class Meta:
+        verbose_name = strings_job.COMPANY_VERBOSE_NAME
+        verbose_name_plural = strings_job.COMPANY_VERBOSE_NAME_PLURAL
+        db_table = 'companies'
+
+    def load_data(self, json_data):
+        self.__dict__ = json_data
+
+    def __str__(self):
+        return self.name
+        
+        
+#Job Model
+class Job(P7Model):
+    job_id = models.UUIDField(primary_key=True, default=uuid.uuid4,editable=False,db_column='id')
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255,unique=True,null=True, blank=True)
+    address = models.CharField(max_length=50, blank=True, null=True)
+    job_area = models.CharField(max_length=255, blank=True, null = True)
+    job_city = models.CharField(max_length=255, blank=True, null = True)
+    job_country = CountryField(default = strings_job.DEFAULT_JOB_COUNTRY)
+    salary = models.CharField(max_length=255, blank=True, null=True)
+    salary_min = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null= True)
+    salary_max = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null= True)
+    currency = models.ForeignKey(Currency, on_delete=models.PROTECT, blank=True, null=True, db_column='currency')
+    other_benefits = models.TextField(blank=True, null=True)
+    experience =  models.PositiveIntegerField(default=0, blank=True, null= True)  ## 0080_auto_20200603_1242 migrations.RunSQL("UPDATE jobs SET experience=1 WHERE experience='1 Year'"),
+    description = models.TextField(blank=True, null=True)
+    qualification = models.ForeignKey(Qualification, on_delete=models.PROTECT,blank=True, null= True,db_column='qualification')
+    responsibilities = models.TextField(blank=True, null=True)
+    additional_requirements = models.TextField(blank=True, null=True)
+    education = models.TextField(blank=True, null=True)
+    vacancy = models.PositiveIntegerField(default=1, null=True)
+    application_deadline = models.DateField(null=True, blank=True)
+    company = models.ForeignKey(Company, on_delete=models.PROTECT, db_column='company', related_name='jobs')
+    company_profile = models.TextField(blank=True, null = True)
+    company_address = models.CharField(max_length=255, blank=True, null = True)
+    company_area = models.CharField(max_length=255, blank=True, null = True)
+    company_city = models.CharField(max_length=255, blank=True, null = True)
+    company_country = CountryField(default = strings_job.DEFAULT_JOB_COUNTRY)
+    latitude = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null = True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null = True)
+    raw_content = models.TextField(blank=True, null=True)
+    favorite_count = models.PositiveIntegerField(default=0)
+    applied_count = models.PositiveIntegerField(default=0)
+    terms_and_condition = models.BooleanField(default=False)
+    job_skills = models.ManyToManyField('Skill', blank=True, related_name='skill_set')
+    status = models.CharField(max_length=20, blank=False, null = False,
+        choices=strings_job.JOB_STATUSES, default=strings_job.DEFAULT_JOB_STATUS)
+    job_site = models.CharField(max_length=20, blank=False, null = False, 
+        choices=strings_job.JOB_SITES, default=strings_job.DEFAULT_JOB_SITE)
+    job_nature = models.CharField(max_length=20, blank=False, null = False, 
+        choices=strings_job.JOB_NATURES, default=strings_job.DEFAULT_JOB_NATURE)
+    job_type = models.CharField(max_length=20, blank=False, null = False, 
+        choices=strings_job.JOB_TYPES, default=strings_job.DEFAULT_JOB_TYPE)
+    creator_type = models.CharField(max_length=20, blank=False, null = False, 
+        choices=strings_job.JOB_CREATOR_TYPES, default=strings_job.DEFAULT_JOB_CREATOR_TYPE)
+    job_source_1 = models.ForeignKey(JobSource, on_delete=models.PROTECT,
+        related_name='jobs1', db_column='job_source_1', blank=True, null= True)
+    job_url_1 = models.CharField(max_length=255, blank=True, null= True)
+    job_source_2 = models.ForeignKey(JobSource, on_delete=models.PROTECT, 
+        related_name='jobs2', db_column='job_source_2', blank=True, null= True)
+    job_url_2 = models.CharField(max_length=255, blank=True, null= True)
+    job_source_3 = models.ForeignKey(JobSource, on_delete=models.PROTECT, 
+        related_name='jobs3', db_column='job_source_3',blank=True, null = True)
+    job_url_3 = models.CharField(max_length=255, blank=True, null= True)
+    job_category = models.ForeignKey(JobCategory, on_delete=models.PROTECT,
+        related_name='jobs', db_column='job_category',blank=True, null = True)
+    job_gender = models.ForeignKey(JobGender, on_delete=models.PROTECT,
+        related_name='jobs', db_column='job_gender',blank=True, null = True)
+    post_date = models.DateTimeField(blank=True, null = True)
+    review_date = models.DateTimeField(blank=True, null = True)
+    approve_date = models.DateTimeField(blank=True, null = True)
+    publish_date = models.DateTimeField(blank=True, null = True)
+    featured = models.BooleanField(default=False)
+
+
+    class Meta:
+        verbose_name = strings_job.JOB_VERBOSE_NAME
+        verbose_name_plural = strings_job.JOB_VERBOSE_NAME_PLURAL
+        db_table = 'jobs'
+        ordering = ['-post_date']
+
+    def load_data(self, json_data):
+        self.__dict__ = json_data
+
+    def __str__(self):
+        return self.title
+
+
+
+def slug_generator(sender, instance, *args, **kwargs):
+    if not instance.slug:
+        instance.slug = unique_slug_generator(instance)
+
+#job Model
+
+
+pre_save.connect(slug_generator, sender=Job)
