@@ -31,3 +31,18 @@ class TopFavouriteList(generics.ListAPIView):
         ).annotate(favourite_count=Count('fav_jobs')
         ).order_by('-favourite_count')[:16]
     serializer_class = TopJobSerializer
+
+
+from rest_framework import generics, permissions
+from rest_framework.decorators import api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from job.models import Company
+from job.serializers import CompanySerializer, CompanyUpdateSerializer
+from p7.auth import CompanyAuthentication
+from p7.models import populate_user_info_request
+
+class CompanyList(generics.ListAPIView):
+    queryset = Company.objects.all().order_by('name')
+    serializer_class = CompanySerializer
