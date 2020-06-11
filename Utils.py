@@ -51,3 +51,58 @@ def applied_job_counter(job):
         job.applied_count = app_job
         job.save()
 # Applied Job Counter
+
+
+################################################################################################################
+
+from difflib import SequenceMatcher
+
+from django.core.mail import send_mail
+from django.template import loader
+
+from p7.settings_dev import *
+from pro.models import Professional
+
+
+def sendSignupEmail(email,id, date):
+    # unique_id = random.randint(100000, 999999)
+    # updateExamineeVerficationCode(email, unique_id)
+    id=str(id)
+    date = str(date)
+    activation_link = hash(id+date)
+    updateProfessionalVerficationLink(email, activation_link)
+
+    data = ''
+    html_message = loader.render_to_string(
+        'account_activation_email.html',
+        {
+            'activation_url': "{}/api/professional/signup-email-verification/email={}&token={}".format(SITE_URL, email, activation_link),
+            'activation_email': email,
+            'subject': 'Thank you from' + data,
+        }
+    )
+    subject_text = loader.render_to_string(
+        'account_activation_email_subject.txt',
+        {
+            'user_name': email,
+            'subject': 'Thank you from' + data,
+        }
+    )
+
+    message = ' it  means a world to us '
+    email_from = EMAIL_HOST_USER
+    recipient_list = [email]
+    send_mail(subject_text, message, email_from, recipient_list,html_message=html_message)
+
+def updateProfessionalVerficationLink(email, unique_link):
+    professional = Professional.objects.get(email=email)
+    professional.signup_verification_code = unique_link
+    professional.save()
+
+def job_alert_save(email):
+    user = Professional.objects.get(email = email)
+    user.job_alert_status = True
+    user.save()
+
+def similar(a, b):
+    return SequenceMatcher(None, a, b).ratio()
