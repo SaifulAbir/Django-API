@@ -1,0 +1,51 @@
+from datetime import datetime, timedelta
+from pprint import pprint
+
+from django.db import connection
+from django.db.models import QuerySet
+from rest_framework.decorators import api_view
+from rest_framework.generics import get_object_or_404, GenericAPIView
+from rest_framework.mixins import UpdateModelMixin
+from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
+from rest_framework.utils import json
+from rest_framework.views import APIView
+from django.db.models import Q, Count
+from job.models import Job, FavouriteJob, JobApplication, Skill
+from job.serializers import JobSerializerAllField, JobSerializer
+from p7.models import populate_user_info
+
+# TODO Handle try catch
+class JobAPI(APIView):
+    def get(self, request, slug):
+        if request.user.is_authenticated:
+            current_user_id = request.user.id
+            queryset = Job.objects.filter(
+                Q(fav_jobs__isnull=True) | Q(fav_jobs__user=current_user_id),
+                Q(applied_jobs__isnull=True) | Q(applied_jobs__created_by=current_user_id),
+                is_archived=False,
+                status='Published',
+                slug=slug,
+            ).select_related('company'
+            ).prefetch_related('job_skills'
+            ).annotate(is_favourite=Count('fav_jobs')
+            ).annotate(is_applied=Count('applied_jobs')
+            ).order_by('-post_date'
+            ).first()
+
+        else:
+            queryset = Job.objects.filter(
+                is_archived=False,
+                status='Published',
+                slug=slug,
+            ).select_related('company'
+            ).prefetch_related('job_skills'
+            ).order_by('-post_date'
+            ).first()
+
+            queryset.is_favourite = False
+            queryset.is_applied = False
+
+        data = JobSerializerAllField(queryset).data
+        pprint(connection.queries)
+        return Response(data)
