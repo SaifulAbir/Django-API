@@ -1,0 +1,15 @@
+class CompanyUpdateView(generics.UpdateAPIView):
+    authentication_classes = [CompanyAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = CompanyUpdateSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Company.objects.filter(
+            user_id = user.id
+        )
+        return queryset
+
+    def put(self, request, *args, **kwargs):
+        populate_user_info_request(request, True, False)
+        return super(CompanyUpdateView, self).put(request, *args, **kwargs)
