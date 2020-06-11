@@ -1,1 +1,44 @@
+@api_view(["POST"])
+def create_job(request):
+    job_data = json.loads(request.body)
+    try:
+        skills = job_data['skills']
+        del job_data['skills']
+    except KeyError:
+        skills = None
 
+    job_obj = Job(**job_data)
+    populate_user_info(request, job_obj, False, False)
+    job_obj.save()
+    if skills:
+        skill_list = skills.split(',')
+        for skill in skill_list:
+            try:
+                skill_obj = Skill.objects.get(name=skill)
+            except Skill.DoesNotExist:
+                skill_obj = None
+            if skill_obj:
+                job_obj.job_skills.add(skill_obj)
+
+    return Response(HTTP_200_OK)
+
+
+@api_view(["POST"])
+def professional_education_save(request):
+    data = json.loads(request.body)
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    data.update({'created_by_id': request.user.id, 'created_at': str(ip)})
+    key_obj = ProfessionalEducation(**data)
+    key_obj.save()
+    if 'institution_id' in data and data['institution_id'] is not None:
+        data['institution_obj'] = InstituteNameSerializer(Institute.objects.get(pk=data['institution_id'])).data
+    if 'major_id' in data and data['major_id'] is not None:
+        data['major_obj'] = MajorSerializer(Major.objects.get(pk=data['major_id'])).data
+    data['id'] = key_obj.id
+    data['degree'] = data["degree_id"]
+    del data["degree_id"]
+    return Response(data)
