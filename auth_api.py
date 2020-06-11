@@ -160,3 +160,37 @@ def profile_create_with_user_create(request):
         }
     }
     return Response(data)
+
+                         
+###################################################################################################################
+                         
+ @api_view(["GET"])
+@permission_classes(())
+def professional_signup_email_verification(request,token):
+    # received_json_data = json.loads(request.body)
+    email_start_marker = 'email='
+    email_end_marker = '&token='
+    email = token[token.find(email_start_marker)+len(email_start_marker):token.find(email_end_marker)]
+
+    token_start_marker = 'token='
+    token = token[token.find(token_start_marker)+len(token_start_marker):]
+    print(email)
+    print(token)
+
+    try:
+        professional=Professional.objects.get(email=email, signup_verification_code=token)
+        professional.signup_verification_code= ''
+        professional.save()
+        user = User.objects.get(id=professional.user.id)
+        user.is_active = 'True'
+        user.save()
+        status=HTTP_200_OK
+    except Professional.DoesNotExist:
+        status=HTTP_404_NOT_FOUND
+
+    if status == HTTP_200_OK:
+        message = PROFILE_VERIFICATION_SUCCESS_MESSAGE
+    else:
+        message = PROFILE_VERIFICATION_FAILED_MESSAGE
+
+    return HttpResponseRedirect("/professional/sign-in/?{}".format(message))
